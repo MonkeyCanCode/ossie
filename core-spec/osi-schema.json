@@ -19,7 +19,7 @@
     },
     "vendors": {
       "type": "array",
-      "description": "Well-known vendors for custom extensions (non-exhaustive list of examples)",
+      "description": "List of vendor names used in custom extensions within this model",
       "items": {
         "$ref": "#/$defs/Vendor"
       }
