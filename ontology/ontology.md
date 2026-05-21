@@ -41,11 +41,9 @@ The allowable multiplicities of relationships defined in the [Ontology](#ontolog
 
 ## Ontologies
 
-Enterprise data are often modeled conceptualy in the form of an ontology with concepts, relationships,
-and business rules. This section describes how to represent ontologies hierarchically as a
-top-level collection of components, each of which defines some concept and the relationships
-that pertain primarily to that concept.
-
+Ontologies are conceptual models of enterprise data that describe the enterprise in terms
+of concepts, relationships, and business rules. This specification represents ontologies
+hierarchically, grouping each relationship under the concept that plays its first role.
 
 ### Concepts
 
@@ -102,7 +100,7 @@ concept. For instance, in:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: Person
           type: EntityType
@@ -110,12 +108,12 @@ ontologies:
         relationships:
           - name: nr
             roles:
-              - player: SocialSecurityNr
+              - concept: SocialSecurityNr
             verbalizes: [ '{Person} is identified by {SocialSecurityNr}' ]
             multiplicity: OneToOne
           - name: earns
             roles:
-              - player: Salary
+              - concept: Salary
             multiplicity: ManyToOne
             verbalizes: [ "{Person} earns {Salary}" ]
           ...
@@ -147,7 +145,7 @@ For instance, in:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: Person
           type: EntityType
@@ -156,8 +154,8 @@ ontologies:
             verbalizes: [ "{Person} files married filing joint" ]
           - name: purchased_on
             roles:
-              - player: Vehicle
-              - player: Date
+              - concept: Vehicle
+              - concept: Date
             multiplicity: ManyToOne
             verbalizes: [ "{Person} puchased {Vehicle} on {Date}" ]
 ```
@@ -174,16 +172,16 @@ the same relationship. For instance, in:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: Store
           type: EntityType
         relationships:
           - name: ships_to_in_days
             roles:
-              - player: Store
+              - concept: Store
                 name: destination
-              - player: NrDays
+              - concept: NrDays
             multiplicity: ManyToOne
             verbalizes: [ "{Store} ships to {Store:destination} in {NrDays}" ]
 ```
@@ -233,26 +231,26 @@ concepts or relationships. For instance:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: Person
           type: EntityType
         relationships:
           - name: parent_of
             roles:
-              - player: Person
+              - concept: Person
                 name: "child"
             verbalizes: [ "{Person} is a parent of {Person:child}", "{Person:child} is a child of {Person}" ]
           - name: ancestor_of
             roles:
-              - player: Person
+              - concept: Person
                 name: "descendant"
             derived_by:
               - "Person.parent_of(descendant)"
                 "Person.ancestor_of.parent_of(descendant)"  
           - name: taxed_at
             roles:
-              - player: TaxRate
+              - concept: TaxRate
             derived_by:
               - "10.0 WHERE ( Person.files_single AND Person.earns <= 11925 )"
               - "10.0 WHERE ( Person.files_married_joint AND Person.earns <= 23850 )"
@@ -285,7 +283,7 @@ using one or more expressions. For instance:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: Employee
           type: EntityType
@@ -305,7 +303,7 @@ expression must reference the concept, as in:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: SocialSecurityNr
           type: ValueType
@@ -319,19 +317,19 @@ relationship. For instance, in:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: Item
           type: EntityType
         relationships:
           - name: offers_in
             roles:
-              - player: Store
+              - concept: Store
             verbalizations: [ "{Item} is offered for sale in {Store}", "{Store} offers sale of {Item}" ]  
           - name: total_sales_in
             roles:
-              - player: Store
-              - player: Amount
+              - concept: Store
+              - concept: Amount
             verbalizations: [ "{Item} sold for cumulative {Amount} in {Store}" ] 
             requires:
               - "Amount > 0.0"
@@ -341,90 +339,89 @@ ontologies:
 the first expression requires any value that plays the `Amount` role to be positive while the second
 requires any item that has sales in some store to be offered in that store.
 
-## Ontology maps
+## Ontology mappings
 
-Logical to conceptual schema mappings declare how to map field values to conceptual objects
-and links. Just as ontologies are orgnaized into hierarchical components, so are ontology maps.
-Each component map declares how to populate a concept with objects and any relationships that
-are primarily keyed by that concept with links. These declarations are formed from patterns
-of expressions that reference one or more fields in a logical model that is declared using
-the OSI core semantic model spec.
+Ontology mappings declare how to map the values of fields at the logical level to objects and links
+in the ontology. Just as ontologies are partitioned by concept, ontology maps partition into concept
+maps that group by some concept in the ontology.
 
-Entity-type objects (entities) are opaque and must be mapped to via their identifying
-relationships. These relationships are always binary, with the first role played by
-the entity type itself. In the common case where an entity type is identified by a
-single relationship whose second role is played by a value type, a value map suffices
-to declare the existence of entities of that type or to look them up when mapping to
-links of a relationship.
+Each concept map declares how to populate a concept with objects and how to populate the relationships
+that are primarily keyed by that concept with links. These declarations are formed from patterns
+of expressions that reference fields in a logical model that is declared using the OSI core semantic
+model spec.
 
-An entity map is an array of identifier maps:
+### Object mappings
+
+An object mapping describes how to map to the objects of some concept using a pattern of SQL
+expressions over the fields of one or more datasets.
+
+An object mapping has the following schema:
 
 | Field | Type | Required | Description |
-|--------------|----------|-----|-------|
-| `role`   | string   | Yes | Expression that indicates the role the mapped objects will play |
-| `value`  | string   | if no `entity`  | Expression that maps to a value (when role played by a value type) |
-| `entity` | list     | if no `value`  | Entity map that maps to an entity (when role played by an entity type) |
+|---------------|---------|-----|-------|
+| `concept`     | string  | No | Names the concept being mapped to using this object map |
+| `expression`  | string  | if no `referent_mappings` | SQL expression that computes a value from fields |
+| `referent_mappings` | list  | if no `expression` | Referent mappings that find entity objects using identifying realtionships |
 
-each of which is either a value map or a nested entity map that looks up an object to map to some
-role of an identifier relationship.
+When the concept is a value type, an object mapping is just a SQL expression that computes its values.
+For instance, an object map that computes `SocialSecurityNumber` values would either retrieve or stitch
+together an integer value that satisfies any constraints.
 
-Building on value and entity maps, we can declare precisely how fields determine the entities of
-a concept and the links of every relationship in which that concept plays the first role. 
+In addition, when a concept is an entity type with a simple identifier -- one relationship that uses some
+value type to uniquely reference the concept -- the object map is just a SQL expression that computes the
+values of the identifying value type and then maps those values to objects of tha entity type using the
+identifier relationship.
 
-#### Entities (entity maps that determine the existence of objects of some entity type)
-
-When a concept is an entity type, it can declare an `entities` array, each element of which
-is an entity map.
-
-For instance, in:
-
+Given this ontology:
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
-      - name: PersonComponent
-        concept:
+    concepts:
+      - concept:
           name: Person
           type: EntityType
           identify_by: [ nr ]
         relationships:
           - name: nr
             roles:
-              - player: SocialSecurityNr
+              - concept: SocialSecurityNr
             multiplicity: OneToOne
             verbalizes: [ "{Person} is identified by {SocialSecurityNr}" ]
-ontology_maps:
-  - name: EnterpriseOntologyMap
-    ontology: EnterpriseOntology
-    logical_model:
-      name: EnterpriseSemanticModel
-      datasets:
-        ...
-    component_maps:
-      - component: PersonComponentMap
-        object_maps:
-          - referent: Person
-            identifier:
-              - relationship: nr
-                object:
-                  referent: SocialSecurityNr
-                  expression: PERSONS.SSN
-    ...
 ```
+this concept mapping:
 
-uses a value map to declare how values from the `SSN` field of dataset `PERSONS` are used
-to form `SocialSecurityNr` values that map to the second role of the `nr` relationship.
-Because each link in that relationship associates a `SocialSecurityNr` value to some
-unique `Person` entity, this value map suffices to associate each distinct `SSN` value
-in the dataset to a distinct `Person` object in the ontology.
+```yaml
+concept_mappings:
+  - concept: Person
+    object_mappings:
+      - expression: PERSONS.SSN                  
+  ...
+```
+uses an object mapping to declare how values from the `SSN` field of dataset `PERSONS` are
+used to form `Person` objects. More precisely, the mapping declares to use `SSN` values to
+form `SocialSecurityNr` values that are supplied to `nr` relationship, which is used to
+identify `Person`. These additional details can be inferred because the object mapping is
+attempting to populate the entity type `Person`, which declares a simple preferred identifier.
 
-A more interesting example maps field values to `OrderLineItem` entities, which are
-identified using two relationships:
+When the concept is an entity type that does not provide a simple preferred identifier, the
+object mapping is an array of referent mappings, each of which declares how to use one of its
+identifying relationships to find its objects given other objects (values and/or objects of
+another entity type).
+
+A referent mapping has the following schema:
+
+| Field | Type | Required | Description |
+|----------------|--------|-----|-------|
+| `relationship` | string | Yes | Name of an identifying relationship |
+| `expression`  | string  | if no `referent_mappings` | SQL expression that computes a value from fields |
+| `referent_mappings` | list  | if no `expression` | Referent mappings that find entity objects using identifying realtionships |
+
+For instance, consider this ontology snippet:
 
 ```yaml
 ontologies:
   - name: EnterpriseOntology
-    components:
+    concepts:
       - concept:
           name: OrderLineItem
           type: EntityType
@@ -432,51 +429,45 @@ ontologies:
           requires: [ "OrderLineItem.nr", "OrderLineItem.order" ]
         relationships:
           - name: nr
-            roles: [ player: LineNr ]
+            roles: [ concept: LineNr ]
             multiplicity: ManyToOne
           - name: order
-            roles: [ player: CustOrder ]
+            roles: [ concept: CustOrder ]
             multiplicity: ManyToOne
-ontology_maps:
-  - ontology: EnterpriseOntology
-    logical_model:
-      name: EnterpriseSemanticModel
-      datasets:
-        ...
-    component_maps:
-      - component: OrderLineItemComponentMap
-        object_maps:
-          - referent: OrderLineItem
-            identifier:
-              - relationship: nr
-                object:
-                  referent: LineNr
-                  expression: LINEITEMS.L_LINENUMBER
-              - relationship: order
-                object:
-                  referent: Order
-                  identifier:
-                    relationship: CustOrder.nr
-                    object:
-                      referent: OrderNr
-                      expression: LINEITEMS.L_ORDERKEY
 ```
 
-This mapping contains a single entity map with two role mappings -- a value map that maps the
-`L_LINENUMBER` field to the second role of the `nr` relationship, and a nested entity map that
-maps `CustOrder` objects to the second role in the `order` relationship.
+and notice that `OrderLineItem` has a compound identifier. This concept mapping:
 
-#### Links (mappings that determine the existence of relationship links)
+```yaml
+concept_mappings:
+  - concept: OrderLineItem
+    object_mappings:
+      - referent_mappings:
+          - relationship: nr
+            expression: LINEITEMS.L_LINENUMBER
+          - relationship: order
+            referent_mappings:
+              relationship: CustOrder.nr
+                  expression: LINEITEMS.L_ORDERKEY
+```
 
-Each relationships is grouped under the concept that plays its first role. A concept's
-`links` array maps field schema to relationships. Each array element is a tree that
-concisely declares how field values map to the links of one or more of these relationships.
-More precisely, the path from the root of a tree to a node describes how to map to tuples
-of objects that form the links of the relationship that is named by the node. These structures
-leverage the hierarchical nature of YAML to avoid duplication in the typical case when the
-fields of a single dataset map to many relationships.
+contains a single object mapping that uses two referent mappings, which:
+1. map the `L_LINENUMBER` field to `LineNr` values for the `nr` relationship, and
+2. use nested referent mappings to find `Order` objects to supply to the `order` relationship.
+The nested referent mappings are needed because `Order` is an entity type.
 
-Each tree node has the following schema:
+
+#### Link mappings
+
+A concept mapping's `link_mappings` array describes how to map logical field schema to the
+relationships that group under the concept associated with the mapping.
+Each link mapping is a tree structure that concisely declares how field values map to the
+links of one or more of these relationships. More precisely, the path from the root of a
+tree to a node describes how to map to tuples of objects that form the links of the relationship
+that is named by the node. These structures leverage the hierarchical nature of YAML to avoid
+duplication in the typical case when the fields of a single dataset map to many relationships.
+
+Each link mapping has the following schema:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -495,8 +486,8 @@ For instance, the `links` array declared here:
 
 ```yaml
 ontologies:
-  - name: EnterproseOntology
-    components:
+  - name: EnterpriseOntology
+    concepts:
       - concept:
           name: Item
           type: EntityType
@@ -519,7 +510,7 @@ ontologies:
             roles: [ concept: Store, concept: Amount ]
             verbalizes: [ "{Item} sells in {Store} for {Amount}" ]
             multiplicitly: ManyToOne
-ontology_maps:
+ontology_mappings:
   - name: flights_map
     description: Example mapping of logical fields to ontology concepts and relationships
     ontology: flights
@@ -528,40 +519,30 @@ ontology_maps:
       description: Logical model for flight data
       datasets:
         ...
-    component_maps:
-      - component: ItemComponentMap
-        object_maps:
-          - referent: Item
-            identifier:
+    concept_mappings:
+      - concept: Item
+        object_mappings:
+          - referent_mappings:
               relationship: Item.nr
-              object:
-                referent: ItemNr
-                expression: ITEMS.SKU
-        link_maps:
-          - maps:
-              referent: Item
-              identifier:
+              expression: ITEMS.SKU
+        link_mappings:
+          - object_mapping:
+              referent_mappings:
                 relationship: Item.nr
-                object:
-                  referent: ItemNr
-                  expression: METRICS.SKU
+                expression: METRICS.SKU
             populates: Item.active
             children:
-              - maps:
-                  referent: Store
-                  identifier:
-                    relationship: Store.nr
-                    object:
-                      referent: StoreNr
-                      expression: METRICS.STORE
+              - object_mapping:
+                  concept: Store
+                  expression: METRICS.STORE
                 populates: Item.active_in
                 children:
-                  - maps:
-                      referent: Amount
+                  - object_mapping:
+                      concept: Amount
                       expression: METRICS.SALES
                     populates: Item.sold_in_for
-                  - maps:
-                      referent: Amount
+                  - object_mapping:
+                      concept: Amount
                       expression: METRICS.RETURNS
                     populates: Item.returned_in_for
 ```

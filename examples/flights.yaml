@@ -2,103 +2,100 @@ version: 0.1.1
 ontologies:
   - name: flights
     description: Ontology for flight-related concepts and relationships
-    components:
-      - name: Example_Runway
-        concept:
+    concepts:
+      - concept:
           name: Example_Runway
           type: EntityType
           identify_by: [ id ]
         relationships:
           - name: id
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_Runway} id {String}' ]
             multiplicity: ManyToOne
           - name: shapelength
             roles:
-              - player: Float
+              - concept: Float
             verbalizes: [ '{Example_Runway} shapeLength {Float}' ]
             multiplicity: ManyToOne
           - name: airportid
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_Runway} airportId {String}' ]
             multiplicity: ManyToOne
           - name: length
             roles:
-              - player: Float
+              - concept: Float
             verbalizes: [ '{Example_Runway} length {Float}' ]
             multiplicity: ManyToOne
           - name: geometry
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_Runway} geometry {String}' ]
             multiplicity: ManyToOne
           - name: designator
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_Runway} designator {String}' ]
             multiplicity: ManyToOne
           - name: airports
             roles:
-              - player: Example_Airport
+              - concept: Example_Airport
             verbalizes: [ '{Example_Runway} airports {Example_Airport}' ]
             multiplicity: ManyToOne
             derived_by: [ 'Example_Runway.airportid == Example_Airport.airportid' ]
-      - name: Example_RouteAlertComment
-        concept:
+      - concept:
           name: Example_RouteAlertComment
           type: EntityType
           identify_by: [ "id" ]
         relationships:
           - name: id
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_RouteAlertComment} id {String}' ]
             multiplicity: ManyToOne
           - name: routealertid
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_RouteAlertComment} routeAlertId {String}' ]
             multiplicity: ManyToOne
           - name: comment
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_RouteAlertComment} comment {String}' ]
             multiplicity: ManyToOne
           - name: routealert
             roles:
-              - player: Example_RouteAlert
+              - concept: Example_RouteAlert
             verbalizes: [ '{Example_RouteAlertComment} routeAlerts {Example_RouteAlert}' ]
             multiplicity: ManyToOne
             derived_by: [ 'Example_RouteAlertComment.routealertid == Example_RouteAlert.routealertid' ]
-      - name: Example_Airport
-        concept:
+      - concept:
           name: Example_Airport
           type: EntityType
           identify_by: [ "airportid" ]
         relationships:
           - name: airportid
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_Airport} airportId {String}' ]
             multiplicity: ManyToOne
           - name: displayairportname
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_Airport} displayAirportName {String}' ]
             multiplicity: ManyToOne
           - name: displaycitymarketnamefull
             roles:
-              - player: String
+              - concept: String
             verbalizes: [ '{Example_Airport} displayCityMarketNameFull {String}' ]
             multiplicity: ManyToOne
           - name: flights
             roles:
-              - player: Example_Flight
+              - concept: Example_Flight
             verbalizes: [ '{Example_Airport} flights {Example_Flight}' ]
             derived_by: [ 'Example_Airport.airportid == Example_Flight.originairportid OR Example_Airport.airportid == Example_Flight.destairportid' ]
-ontology_maps:
+ontology_mappings:
   - name: flights_map
     description: Example mapping of logical fields to ontology concepts and relationships
     ontology: flights
@@ -1063,41 +1060,35 @@ ontology_maps:
                 dialects:
                   - dialect: ANSI_SQL
                     expression: CAST(route_title AS VARCHAR)
-    component_maps:
-      - component: Example_Runway
-        object_maps:
-          - referent: Example_Runway
-            identifier:
+    concept_mappings:
+      - concept: Example_Runway
+        object_mappings:
+          - referent_mappings:
               - relationship: id
-                object:
-                  referent: String
-                  expression: Example_Runway_example_runway.id
-        link_maps:
-          - maps:
-              referent: Example_Runway
-              identifier:
+                expression: Example_Runway_example_runway.id
+        link_mappings:
+          - object_mapping:
+              referent_mappings:
                 - relationship: id
-                  object:
-                    referent: String
-                    expression: Example_Runway_example_runway.id
+                  expression: Example_Runway_example_runway.id
             children:
-              - maps:
-                  referent: Float
+              - object_mapping:
+                  concept: Float
                   expression: Example_Runway_example_runway.length
                 populates: length
-              - maps:
-                  referent: String
+              - object_mapping:
+                  concept: String
                   expression: Example_Runway_example_runway.geometry
                 populates: geometry
-              - maps:
-                  referent: String
+              - object_mapping:
+                  concept: String
                   expression: Example_Runway_example_runway.designator
                 populates: designator
-              - maps:
-                  referent: Float
+              - object_mapping:
+                  concept: Float
                   expression: Example_Runway_example_runway.shape_length
                 populates: shape_length
-              - maps:
-                  referent: String
+              - object_mapping:
+                  concept: String
                   expression: Example_Runway_example_runway.airport_id
                 populates: airport_id

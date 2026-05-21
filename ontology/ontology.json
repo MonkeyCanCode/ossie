@@ -31,7 +31,7 @@
         "$ref": "#/$defs/Ontology"
       }
     },
-    "ontology_maps": {
+    "ontology_mappings": {
       "type": "array",
       "description": "Collection of ontology maps from logical models",
       "items": {
@@ -46,10 +46,6 @@
       "type": "object",
       "description": "Ontology component that defines a single concept and any relationships that are keyed primarily by that concept",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the component"
-        },
         "description": {
           "type": "string",
           "description": "Human-readable description of the component"
@@ -65,7 +61,7 @@
           "description": "Defines relationships that pertain primarily to the concept defined in this component"
         }
       },
-      "required": ["name"],
+      "required": ["concept"],
       "additionalProperties": false
     },
     "Expression": {
@@ -159,30 +155,30 @@
       "required": ["name", "type"],
       "additionalProperties": false
     },
-    "ComponentMap": {
+    "ConceptMapping": {
       "type": "object",
       "description": "Mappings from logical model constructs to some ontology component",
       "properties": {
-        "component": {
+        "concept": {
           "type": "string",
-          "description": "Name of the ontology component whose concept and/or relationships are being mapped to"
+          "description": "Name of the concept whose part of the ontology we are mapping to"
         },
-        "object_maps": {
+        "object_mappings": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ObjectExpr"
+            "$ref": "#/$defs/ObjectMapping"
           },
           "description": "Mappings from logical constructs that populate the concept in this component. Valid only when the concept is an entity type"
         },         
-        "link_maps": {
+        "link_mappings": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/LinkExpr"
+            "$ref": "#/$defs/LinkMapping"
           },
           "description": "Mappings from logical model relationships to ontology relationships pertaining to the mapped concept"
         }
       },
-      "required": ["component"],
+      "required": ["concept"],
       "additionalProperties": false
     },
     "ConceptType": {
@@ -190,7 +186,7 @@
       "enum": [ "EntityType", "ValueType" ],
       "description": "A concept is either an entity type or a value type"
     },
-    "ReferentMap": {
+    "ReferentMapping": {
       "type": "object",
       "description": "Mapping from logical model constructs to a relationship used to references some entity type in the ontology",
       "properties": {
@@ -198,8 +194,14 @@
           "type": "string",
           "description": "Name of referent relationship"
         },
-        "object": {
-          "$ref": "#/$defs/ObjectExpr"
+        "expression": {
+          "$ref": "#/$defs/Expression"
+        },
+        "referent_mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ReferentMapping"
+          }
         }
       },
       "required": ["relationship"],
@@ -209,7 +211,7 @@
       "type": "object",
       "description": "Role in some relationship (the container)",
       "properties": {
-        "player": {
+        "concept": {
           "type": "string",
           "description": "Name of the concept playing this role"
         },
@@ -218,21 +220,21 @@
           "description": "Optional name of this role, used when the same concept plays multiple roles in the same relationship"
         }
       },
-      "required": ["player"],
+      "required": ["concept"],
       "additionalProperties": false
     },
-    "ObjectExpr": {
+    "ObjectMapping": {
       "type": "object",
-      "description": "Pattern of logical-level expressions for identifying objects of some referent concept using the values in one or more fields",
+      "description": "Pattern of logical-level expressions for identifying objects of some concept using the values in one or more fields",
       "properties": {
-        "referent": {
+        "concept": {
           "type": "string",
-          "description": "Name of the referent concept"
+          "description": "Name of the concept whose objects we are mapping to"
         },
-        "identifier": {
+        "referent_mappings": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ReferentMap"
+            "$ref": "#/$defs/ReferentMapping"
           },
           "description": "Maps logical-model constructs to referent relationships of this entity type"
         },
@@ -240,29 +242,28 @@
           "$ref": "#/$defs/Expression"
         }
       },
-      "required": ["referent"],
       "additionalProperties": false
     },
-    "LinkExpr": {
+    "LinkMapping": {
       "type": "object",
-      "description": "Mapping from logical model constructs to the links of some relationship in the ontology",
+      "description": "Mapping from logical schema to the links of relationships in the ontology",
       "properties": {
         "populates": {
           "type": "string",
-          "description": "Name of relationship being populated by this map"
+          "description": "Name of relationship being populated by this mapping node"
         },
-        "maps": {
-            "$ref": "#/$defs/ObjectExpr"
+        "object_mapping": {
+            "$ref": "#/$defs/ObjectMapping"
         },
         "children": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/LinkExpr"
+            "$ref": "#/$defs/LinkMapping"
           },
           "description": "Relationship maps at the next level in this hierarchy"
         }
       },
-      "required": ["maps"],
+      "required": ["object_mapping"],
       "additionalProperties": false
     },
     "Multiplicity": {
@@ -289,15 +290,15 @@
         "logical_model": {
           "$ref": "https://raw.githubusercontent.com/open-semantic-interchange/OSI/main/core-spec/osi-schema.json#/$defs/SemanticModel"
         },
-        "component_maps": {
+        "concept_mappings": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/ComponentMap"
+            "$ref": "#/$defs/ConceptMapping"
           },
           "description": "Maps logical model constructs to some concept and its relationships in the ontology"
         }
       },
-      "required": ["logical_model", "ontology", "component_maps"],
+      "required": ["logical_model", "ontology", "concept_mappings"],
       "additionalProperties": false
     },
     "Ontology": {
@@ -315,7 +316,7 @@
         "ai_context": {
           "$ref": "https://raw.githubusercontent.com/open-semantic-interchange/OSI/main/core-spec/osi-schema.json#/$defs/AIContext"
         },
-        "components": {
+        "concepts": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/Component"
@@ -324,7 +325,7 @@
           "description": "Components that define the concepts and relationships in this ontology"
         }
       },
-      "required": ["name", "components"],
+      "required": ["name", "concepts"],
       "additionalProperties": false
     }
   }
