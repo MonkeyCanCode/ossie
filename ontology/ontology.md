@@ -50,7 +50,7 @@ Ontologies come with several built in concepts that can be referred to by name:
 
 ### Multiplicities
 
-The allowable multiplicities of relationships defined in the [Ontology](#ontology) section.
+The allowable multiplicities of relationships defined in the [Relationships](#relationships) section.
 
 | Multiplicity | Description |
 |---------|-------------|
@@ -62,22 +62,25 @@ The allowable multiplicities of relationships defined in the [Ontology](#ontolog
 Ontologies are conceptual models of enterprise data that describe the enterprise in terms
 of concepts, relationships, and business rules. This specification represents ontologies
 hierarchically, grouping each relationship under the concept that plays its first role.
-Every ontology implicitly includes all of the built-in concepts (see Built-in concepts
-enumeration above) and may refer to them by name without declaring them.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Unique name of this ontology |
+| `description` | string | No | Human-readable description |
+| `ai_context` | string/object | No | Additional context for AI tools |
+| `concepts` | list | Yes | Concepts and relationships they group that form this ontology |
 
 ### Concepts
 
 Concepts represent the types of things that have meaning in a business setting, e.g., person, company,
-or salary. Each concept is either an entity type or a value type. Ontologies implicitly include a
-set of [built-in concepts](#built-in-concepts), including a value-type for each basic data type,
-like `Integer`, `Decimal`, and `String`, and a most-general entity type called `Any`. Every other
-concept in an ontology extends (is a subtype of) one of these concepts.
+or salary. Every ontology implicitly includes all of the [built-in concepts](#built-in-concepts) and
+may refer to them by name without declaring them. 
 
-Concepts have to the following schema:
+Concepts have the following schema:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `concept` | string | Yes | Unique name of this concept |
+| `name` | string | Yes | Unique name of this concept |
 | `type` | ConceptType | Yes | Entity type or value type |
 | `description` | string | No | Human-readable description |
 | `relationships` | list | No | Relationships where this concept plays the first role |
@@ -86,16 +89,35 @@ Concepts have to the following schema:
 | `identify_by` | list | No | Names of relationships that uniquely reference objects of this concept |
 | `requires` | list | No | Expressions that constrain this concept's population |
 
+Each concept is either an entity type or a value type, and each concept groups any relationships
+where that concept plays the first role.
+
 ### Extends
 
 Every user-declared concept extends one or more concepts in the ontology. The new concept
-is a sutype of each concept that it extends, and the extended concepts are its supertypes.
+is a subtype of each concept that it extends, and the extended concepts are its supertypes.
 
-Any value type concept that is introduced in an ontology must either directly or indirectly
-extend one of the built-in value types like `Integer` and `String`.
+Any value type concept must either directly or indirectly extend one of the built-in value
+types like `Integer` and `String`.
 
 Entity type concepts can only extend other entity type concepts, and every entity type
 implicitly extends the built-in concept `Any`.
+
+This ontology snippet:
+```yaml
+ontologies:
+  - name: EnterpriseOntology
+    concepts:
+      - concept:
+          name: SocialSecurityNr
+          type: ValueType
+          extends: [Integer]
+      - concept:
+          name: Employee
+          type: EntityType
+          extends: [Person]
+```
+declares two concepts that extend other concepts.
 
 ### Relationships
 
@@ -233,18 +255,21 @@ and each social security number identifies at most one person.
 
 ### Identifying relationships
 
-Many conceptual models distinguish one or more relationships to use when referencing entity-type
-objects in expressions and queries. The `Person.nr` relationship can be used to reference a
-person by their social security number; while the pair of relationships `License.acct` and
-`License.seat_nr` can be used to reference a license by its associated account and seat number.
-These identifier relationships are always binary, and their first role is always played by the
-concept the relationship is used to reference.
+Entity-type objects cannot be referenced directly but must instead be referenced using one or more
+relationships whose use allows to reference an entity type using other kinds of objects. Some modeling
+methods distinguish a preferred identifier to use when referencing an entity type. For instance, the
+`Person.nr` relationship can be used to reference a person by their social security number; while
+the pair of relationships `License.acct` and `License.seat_nr` can be used to reference a license by
+its associated account and seat number. These relationships are always binary, and their first role
+is always played by the referent concept, i.e., the concept that the relationship is used to reference.
+The `identify_by` array allows modelers to list the names of relationships that form the preferred
+idnetifier of a concept.
 
 ### Derivation expressions
 
 Concepts and relationships may be derived using expressions. Think of a derived concept or 
-relationship as a conceptual view whose objects or links are derived from those of other
-concepts or relationships. For instance:
+relationship as a view whose objects or links are derived from those of other concepts or
+relationships. For instance:
 
 ```yaml
 ontologies:
@@ -290,10 +315,9 @@ not link that person.
 Expressions that derive a relationship are interpreted as rules for constructing the links of the
 relationship in the same way that a SQL query is interpreted as a rule for constructing the rows
 of a new table. Each expression must therefore reference each role of the relationship, either
-explicitly or implicitly. If an expression evaluates to some object (like 10.0 in the two examples
-here) then that object will implicitly play the last role, and the expression must reference each
-of the other roles explicitly. If an expression does not evaluate to any object, then it must
-explicitly reference each role.
+explicitly or implicitly. If an expression evaluates to some object then that object will implicitly
+play the last role, and the expression must reference each of the other roles explicitly.
+If an expression does not evaluate to any object, then it must explicitly reference each role.
 
 A derived concept is one whose population is derived from that of its supertype concepts
 using one or more expressions. For instance:
@@ -418,10 +442,9 @@ an object mapping that computes `SocialSecurityNumber` values would use a SQL ex
 stitch together an integer value and check that the value satisfies the constraints on that concept.
 
 Because `Person` uses a simple identifier -- one that involves one relationship that uses some
-value type to uniquely reference the concept -- an object mapping can find its objects using a
+value type to uniquely reference the concept -- an object mapping can map to its objects using a
 SQL expression that computes the values of its identifying value type (`SocialSecurityNr`) and
-then mapping those values to `Person` objects using the declared identifier relationship.
-The object mapping in:
+then mapping those values to `Person` objects using the declared identifier. The object mapping in:
 
 ```yaml
 concept_mappings:
@@ -430,14 +453,11 @@ concept_mappings:
       - expression: PERSONS.SSN                  
   ...
 ```
-maps values from the `SSN` field of dataset `PERSONS` into `Person` objects. More precisely,
-the mapping declares to use `SSN` values to form `SocialSecurityNr` values that are supplied
-to `nr` relationship, which is used to identify `Person`.
+maps values from the `SSN` field of dataset `PERSONS` into `Person` objects.
 
-When an entity-type concept does not provide a simple identifier, the object mapping is an
-array of referent mappings, each of which declares how to use one of its identifying
-relationships to find its objects given other objects (values and/or objects of another
-entity type).
+When an entity-type concept does not provide a simple identifier, the object mapping uses
+an array of referent mappings, each of which declares how to use one of the concept's
+identifying relationships to map to its objects from other objects.
 
 Referent mappings have the following schema:
 
@@ -478,22 +498,25 @@ concept_mappings:
             expression: LINEITEMS.L_LINENUMBER
           - relationship: order
             referent_mappings:
-              relationship: CustOrder.nr
-                  expression: LINEITEMS.L_ORDERKEY
+              - relationship: CustOrder.nr
+                expression: LINEITEMS.L_ORDERKEY
 ```
 
-contains a single object mapping that uses two referent mappings, which:
-1. map the `L_LINENUMBER` field to `LineNr` values for the `nr` relationship, and
-2. use nested referent mappings to find `Order` objects to supply to the `order` relationship.
-The nested referent mappings are needed because `Order` is an entity type.
-
+contains a single object mapping that uses two referent mappings, which use:
+1. an expression to map the `L_LINENUMBER` field to `LineNr` values to provide to the `nr` relationship, and
+2. a nested referent mapping that maps to `Order` objects to provide to the `order` relationship.
+The nested referent mapping is needed because `Order` is an entity type.
 
 #### Link mappings
 
-Link mappings describe how to map logical field schema to the relationships that group under the
-concept associated with the mapping. These mappings are organized into tree structures to avoid
-duplication and clarify mapping intent in the typical case when fields map to objects that play
-roles in many different relationships.
+A concept mapping's link mappings describe how to map logical field schema to the relationships that
+group under the concept associated with the mapping.
+
+These mappings are organized into tree structures to avoid duplication and clarify mapping intent in
+the typical case when fields map to objects that play roles in many different relationships. Semantically,
+each link mapping uses a pattern of SQL expressions to map to object tuples, which can then form the links
+of some relationship or can form the prefixes of longer tuples that are mapped to by the mapping's
+children.
 
 Link mappings have the following schema:
 
@@ -502,10 +525,6 @@ Link mappings have the following schema:
 | `object_mapping` | object | Yes | Maps to objects in the last position of mapped tuples |
 | `relationship` | string | No | Relationship whose links include the tuples mapped to by this mapping |
 | `children` | list | No | List of child nodes in the tree |
-
-Semantically, each link mapping uses a pattern of SQL expressions to map to object tuples, which
-can then be used to form the links of the relationship that is named by the mapping as prefixes
-of longer tuples that are mapped to by its child link mappings.
 
 The level of a link mapping must coincide with the arity of the relationship it names. So a
 top-level mapping could name a unary relationship, a mapping at level 2 could name to a binary
@@ -554,30 +573,27 @@ fields:
               referent_mappings:
                 relationship: Item.nr
                 expression: METRICS.SKU
-            relationship: Item.active
+            relationship: active
             children:
               - object_mapping:
                   concept: Store
                   expression: METRICS.STORE
-                relationship: Item.active_in
+                relationship: active_in
                 children:
                   - object_mapping:
                       concept: Amount
                       expression: METRICS.SALES
-                    relationship: Item.sold_in_for
+                    relationship: sold_in_for
                   - object_mapping:
                       concept: Amount
                       expression: METRICS.RETURNS
-                    relationship: Item.returned_in_for
+                    relationship: returned_in_for
 ```
-
 The top level mapping is a tree with one root node, one node at level 2, and two nodes at
 level 3. Each node maps fields of the `METRICS` dataset to links of four different relationships,
 and notice how the mapping to `Item` objects is declared once even though `Item` plays a role in
 all four of the relationships and that the mapping to `Store` objects is declared once even
 though `Store` plays a role in three of the relationships.
-
-```
 
 ## Version History
 
