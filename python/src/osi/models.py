@@ -71,7 +71,7 @@ class OSIDimension(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    is_time: bool
+    is_time: Optional[bool] = None
 
 
 class OSIField(BaseModel):
