@@ -1,7 +1,7 @@
 """OSI → OBML conversion (the :class:`OSItoOBML` direction).
 
 Extracted verbatim from ``converter.py``; see that module for the package-level
-docstring and the shared constants in :mod:`osi_orionbelt._common`.
+docstring and the shared constants in :mod:`ossie_orionbelt._common`.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import json
 import re
 from typing import Any
 
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _COLUMN_REF_RE,
     _INTERNAL_VENDORS,
     _OBML_VENDOR_READ,

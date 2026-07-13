@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import osi_orionbelt.converter as conv
+import ossie_orionbelt.converter as conv
 
 
 def _osi_field(name: str, **extra: Any) -> dict[str, Any]:

@@ -19,14 +19,14 @@ from typing import Any
 
 import pytest
 
-import osi_orionbelt.converter as conv
+import ossie_orionbelt.converter as conv
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 _SCHEMA_PATH = (
-    Path(__file__).resolve().parents[1] / "src" / "osi_orionbelt" / "schemas" / "osi-schema.json"
+    Path(__file__).resolve().parents[1] / "src" / "ossie_orionbelt" / "schemas" / "osi-schema.json"
 )
 
 

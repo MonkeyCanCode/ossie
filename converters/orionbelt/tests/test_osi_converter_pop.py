@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-import osi_orionbelt.converter as conv
+import ossie_orionbelt.converter as conv
 
 # ---------------------------------------------------------------------------
 # Test OBML model with period-over-period metrics

@@ -1,7 +1,7 @@
 """OBML → OSI conversion (the :class:`OBMLtoOSI` direction).
 
 Extracted verbatim from ``converter.py``; see that module for the package-level
-docstring and the shared constants in :mod:`osi_orionbelt._common`.
+docstring and the shared constants in :mod:`ossie_orionbelt._common`.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ import json
 import re
 from typing import Any
 
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _INTERNAL_VENDORS,
     _OSI_VENDOR_READ,
     _OSI_VERSION,
@@ -87,7 +87,7 @@ class OBMLtoOSI:
         roundtrip_data: dict[str, Any] = {
             "source_format": "OBML",
             "source_version": str(self.obml.get("version", "1.0")),
-            "converter": "osi-orionbelt",
+            "converter": "ossie-orionbelt",
         }
         # Preserve model-level static filters for roundtrip
         obml_filters = self.obml.get("filters", [])

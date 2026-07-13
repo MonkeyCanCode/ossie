@@ -14,13 +14,13 @@ Author: OrionBelt / RALFORION
 This module is a thin **facade**. The converter implementation is split across
 sibling modules to keep each file focused:
 
-* :mod:`osi_orionbelt._common` — shared constants and mapping tables
-* :mod:`osi_orionbelt.osi_to_obml` — :class:`OSItoOBML`
-* :mod:`osi_orionbelt.obml_to_osi` — :class:`OBMLtoOSI`
-* :mod:`osi_orionbelt.ontology` — :class:`OBMLtoOSIOntology`
-* :mod:`osi_orionbelt.validation` — :class:`ValidationResult` + ``validate_*``
+* :mod:`ossie_orionbelt._common` — shared constants and mapping tables
+* :mod:`ossie_orionbelt.osi_to_obml` — :class:`OSItoOBML`
+* :mod:`ossie_orionbelt.obml_to_osi` — :class:`OBMLtoOSI`
+* :mod:`ossie_orionbelt.ontology` — :class:`OBMLtoOSIOntology`
+* :mod:`ossie_orionbelt.validation` — :class:`ValidationResult` + ``validate_*``
 
-Every public name is re-exported here so ``osi_orionbelt.converter.<name>``
+Every public name is re-exported here so ``ossie_orionbelt.converter.<name>``
 continues to work unchanged.
 """
 
@@ -32,83 +32,83 @@ from pathlib import Path
 
 import yaml
 
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _COLUMN_REF_RE as _COLUMN_REF_RE,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _INTERNAL_VENDORS as _INTERNAL_VENDORS,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _OBML_VENDOR_READ as _OBML_VENDOR_READ,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _OSI_KNOWN_DIALECTS as _OSI_KNOWN_DIALECTS,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _OSI_KNOWN_VENDORS as _OSI_KNOWN_VENDORS,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _OSI_VENDOR_READ as _OSI_VENDOR_READ,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _OSI_VERSION as _OSI_VERSION,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _SQL_PARSEABLE_DIALECTS as _SQL_PARSEABLE_DIALECTS,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _VENDOR_OBML as _VENDOR_OBML,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     _VENDOR_OSI as _VENDOR_OSI,
 )
 
 # Shared constants / mapping tables (re-exported for backwards compatibility).
 # The ``X as X`` aliases mark these as intentional re-exports so historic
-# ``from osi_orionbelt.converter import <name>`` imports keep working.
-from osi_orionbelt._common import (
+# ``from ossie_orionbelt.converter import <name>`` imports keep working.
+from ossie_orionbelt._common import (
     OBML_TO_OSI_TYPE as OBML_TO_OSI_TYPE,
 )
-from osi_orionbelt._common import (
+from ossie_orionbelt._common import (
     OSI_TO_OBML_TYPE as OSI_TO_OBML_TYPE,
 )
-from osi_orionbelt.obml_to_osi import OBMLtoOSI as OBMLtoOSI
-from osi_orionbelt.ontology import OBMLtoOSIOntology as OBMLtoOSIOntology
-from osi_orionbelt.osi_to_obml import OSItoOBML as OSItoOBML
-from osi_orionbelt.validation import (
+from ossie_orionbelt.obml_to_osi import OBMLtoOSI as OBMLtoOSI
+from ossie_orionbelt.ontology import OBMLtoOSIOntology as OBMLtoOSIOntology
+from ossie_orionbelt.osi_to_obml import OSItoOBML as OSItoOBML
+from ossie_orionbelt.validation import (
     _OBML_SCHEMA_PATH as _OBML_SCHEMA_PATH,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     _OSI_CORE_SPEC_RAW_URL as _OSI_CORE_SPEC_RAW_URL,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     _OSI_ONTOLOGY_SCHEMA_PATH as _OSI_ONTOLOGY_SCHEMA_PATH,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     _OSI_SCHEMA_PATH as _OSI_SCHEMA_PATH,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     _SCHEMAS_DIR as _SCHEMAS_DIR,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     _SCRIPT_DIR as _SCRIPT_DIR,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     ValidationResult as ValidationResult,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     _osi_core_registry as _osi_core_registry,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     _validate_json_schema as _validate_json_schema,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     validate_obml as validate_obml,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     validate_osi as validate_osi,
 )
-from osi_orionbelt.validation import (
+from ossie_orionbelt.validation import (
     validate_osi_ontology as validate_osi_ontology,
 )
 

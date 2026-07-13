@@ -1,11 +1,11 @@
 """Command-line entry point for the OBML <-> OSI converter.
 
-A single ``osi-orionbelt`` command with two format-named subcommands, mirroring
+A single ``ossie-orionbelt`` command with two format-named subcommands, mirroring
 the OSI converter convention (e.g. ``osi-dbt msi-to-osi``):
 
-    osi-orionbelt obml-to-osi  -i model.obml.yaml -o model.osi.yaml
-    osi-orionbelt obml-to-osi --ontology -i model.obml.yaml -o model.ontology.yaml
-    osi-orionbelt osi-to-obml  -i model.osi.yaml  -o model.obml.yaml
+    ossie-orionbelt obml-to-osi  -i model.obml.yaml -o model.osi.yaml
+    ossie-orionbelt obml-to-osi --ontology -i model.obml.yaml -o model.ontology.yaml
+    ossie-orionbelt osi-to-obml  -i model.osi.yaml  -o model.obml.yaml
 
 Both subcommands print conversion warnings and a validation summary to stderr,
 and exit non-zero when the produced document fails schema validation (unless
@@ -21,7 +21,7 @@ from typing import Any
 
 import yaml
 
-from osi_orionbelt.converter import (
+from ossie_orionbelt.converter import (
     OBMLtoOSI,
     OBMLtoOSIOntology,
     OSItoOBML,
@@ -108,7 +108,7 @@ def _cmd_osi_to_obml(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="osi-orionbelt",
+        prog="ossie-orionbelt",
         description="Convert between OrionBelt OBML and OSI YAML.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)

@@ -177,22 +177,22 @@ Validation runs automatically after each conversion. Use `--no-validate` to skip
 
 ### CLI
 
-A single `osi-orionbelt` command with two subcommands is installed with the package:
+A single `ossie-orionbelt` command with two subcommands is installed with the package:
 
 ```bash
 # OSI → OBML
-osi-orionbelt osi-to-obml -i tpcds_osi.yaml -o tpcds_as_obml.yaml
+ossie-orionbelt osi-to-obml -i tpcds_osi.yaml -o tpcds_as_obml.yaml
 
 # OBML → OSI
-osi-orionbelt obml-to-osi -i tpcds_as_obml.yaml -o tpcds_obml_as_osi.yaml \
+ossie-orionbelt obml-to-osi -i tpcds_as_obml.yaml -o tpcds_obml_as_osi.yaml \
   --model-name tpcds_retail_model \
   --description "TPC-DS retail semantic model"
 
 # OBML → OSI ontology document
-osi-orionbelt obml-to-osi --ontology -i tpcds_as_obml.yaml -o tpcds_ontology.yaml
+ossie-orionbelt obml-to-osi --ontology -i tpcds_as_obml.yaml -o tpcds_ontology.yaml
 
 # Skip validation
-osi-orionbelt osi-to-obml -i input.yaml -o output.yaml --no-validate
+ossie-orionbelt osi-to-obml -i input.yaml -o output.yaml --no-validate
 ```
 
 ### CLI Options
@@ -214,7 +214,7 @@ osi-orionbelt osi-to-obml -i input.yaml -o output.yaml --no-validate
 ### Python API
 
 ```python
-from osi_orionbelt import OSItoOBML, OBMLtoOSI, validate_obml, validate_osi
+from ossie_orionbelt import OSItoOBML, OBMLtoOSI, validate_obml, validate_osi
 
 # OSI → OBML
 converter = OSItoOBML(osi_dict)
@@ -258,8 +258,8 @@ Converting the OBML output back to OSI produces a valid OSI model where:
 |---|---|
 | `tests/fixtures/tpcds_osi.yaml` | Official TPC-DS OSI example (from OSI repo) |
 | `tests/fixtures/tpcds_as_obml.yaml` | Converted OBML output |
-| `src/osi_orionbelt/schemas/osi-schema.json` | OSI JSON Schema (Draft 2020-12, from OSI repo) |
-| `src/osi_orionbelt/converter.py` | Bidirectional converter with validation |
+| `src/ossie_orionbelt/schemas/osi-schema.json` | OSI JSON Schema (Draft 2020-12, from OSI repo) |
+| `src/ossie_orionbelt/converter.py` | Bidirectional converter with validation |
 
 ## 7. Future Considerations
 

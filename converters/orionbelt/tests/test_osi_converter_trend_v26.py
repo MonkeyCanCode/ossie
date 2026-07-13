@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import osi_orionbelt.converter as conv
+import ossie_orionbelt.converter as conv
 
 _OBML_V26: dict[str, Any] = {
     "version": 1.0,

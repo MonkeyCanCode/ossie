@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 
-import osi_orionbelt.converter as conv
+import ossie_orionbelt.converter as conv
 
 _FIXTURE = Path(__file__).resolve().parent / "fixtures" / "tpcds_semantic_model.yaml"
 

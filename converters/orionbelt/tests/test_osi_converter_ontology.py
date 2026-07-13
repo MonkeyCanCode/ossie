@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-import osi_orionbelt.converter as conv
+import ossie_orionbelt.converter as conv
 
 _OBML: dict[str, Any] = {
     "version": 1.0,

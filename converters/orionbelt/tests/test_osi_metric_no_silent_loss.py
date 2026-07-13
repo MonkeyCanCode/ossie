@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-import osi_orionbelt.converter as conv
+import ossie_orionbelt.converter as conv
 
 
 def _osi_model(metrics: list[dict[str, Any]]) -> dict[str, Any]:

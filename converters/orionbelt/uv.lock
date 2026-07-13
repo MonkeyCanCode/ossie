@@ -38,6 +38,42 @@ wheels = [
 ]
 
 [[package]]
+name = "apache-ossie-orionbelt"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "pyyaml" },
+    { name = "referencing" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "types-jsonschema" },
+    { name = "types-pyyaml" },
+]
+obml-validation = [
+    { name = "orionbelt-semantic-layer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jsonschema", specifier = ">=4.18" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "orionbelt-semantic-layer", marker = "extra == 'obml-validation'" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "referencing", specifier = ">=0.30" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
+    { name = "types-jsonschema", marker = "extra == 'dev'" },
+    { name = "types-pyyaml", marker = "extra == 'dev'" },
+]
+provides-extras = ["obml-validation", "dev"]
+
+[[package]]
 name = "ast-serialize"
 version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -409,42 +445,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/26/59/0cdca9e8a0c49c43e
 wheels = [
     { url = "https://files.pythonhosted.org/packages/82/d9/5c0f42a6590dc4e597d1d582805a73f0139d8d7409cfbe8aa5cf333982bc/orionbelt_semantic_layer-2.10.0-py3-none-any.whl", hash = "sha256:86b05d8ac608a5ef8ce7ade09b11e540e6eeba74df3605e2f08c0623b9e12d02", size = 566010, upload-time = "2026-06-12T16:49:14.486Z" },
 ]
-
-[[package]]
-name = "osi-orionbelt"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "jsonschema" },
-    { name = "pyyaml" },
-    { name = "referencing" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "types-jsonschema" },
-    { name = "types-pyyaml" },
-]
-obml-validation = [
-    { name = "orionbelt-semantic-layer" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "jsonschema", specifier = ">=4.18" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
-    { name = "orionbelt-semantic-layer", marker = "extra == 'obml-validation'" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "referencing", specifier = ">=0.30" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4" },
-    { name = "types-jsonschema", marker = "extra == 'dev'" },
-    { name = "types-pyyaml", marker = "extra == 'dev'" },
-]
-provides-extras = ["obml-validation", "dev"]
 
 [[package]]
 name = "packaging"

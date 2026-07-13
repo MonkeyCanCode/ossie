@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from osi_orionbelt._common import _OSI_VERSION
-from osi_orionbelt.obml_to_osi import OBMLtoOSI
+from ossie_orionbelt._common import _OSI_VERSION
+from ossie_orionbelt.obml_to_osi import OBMLtoOSI
 
 
 class OBMLtoOSIOntology:

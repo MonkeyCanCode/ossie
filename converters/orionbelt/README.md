@@ -1,4 +1,4 @@
-# osi-orionbelt
+# apache-ossie-orionbelt
 
 Bidirectional converter between **OBML** (OrionBelt Markup Language) semantic
 models and **OSI** ([Open Semantic Interchange](https://open-semantic-interchange.org/)),
@@ -20,14 +20,14 @@ file issues and contributions upstream.
 ## Install
 
 ```bash
-pip install osi-orionbelt
+pip install apache-ossie-orionbelt
 ```
 
 Optional deep OBML semantic validation (cycles, duplicate names, invalid refs)
 via the full OrionBelt engine:
 
 ```bash
-pip install "osi-orionbelt[obml-validation]"
+pip install "apache-ossie-orionbelt[obml-validation]"
 ```
 
 Without that extra, OBML validation runs JSON-schema checks only and emits a
@@ -35,7 +35,7 @@ warning for the deeper semantic pass.
 
 ## CLI
 
-A single `osi-orionbelt` command with two subcommands (mirroring `osi-dbt`):
+A single `ossie-orionbelt` command with two subcommands (mirroring `ossie-dbt`):
 
 | Subcommand | Direction | In | Out |
 |---------|-----------|----|----|
@@ -44,22 +44,22 @@ A single `osi-orionbelt` command with two subcommands (mirroring `osi-dbt`):
 | `osi-to-obml` | OSI core-spec -> OBML | OSI YAML | OBML YAML |
 
 ```bash
-osi-orionbelt obml-to-osi -i model.obml.yaml -o model.osi.yaml
-osi-orionbelt obml-to-osi --ontology -i model.obml.yaml -o model.ontology.yaml
-osi-orionbelt osi-to-obml -i model.osi.yaml -o model.obml.yaml
+ossie-orionbelt obml-to-osi -i model.obml.yaml -o model.osi.yaml
+ossie-orionbelt obml-to-osi --ontology -i model.obml.yaml -o model.ontology.yaml
+ossie-orionbelt osi-to-obml -i model.osi.yaml -o model.obml.yaml
 ```
 
 `-i/--input` and `-o/--output` are required. Each subcommand prints conversion
 warnings and a validation summary to stderr, and exits non-zero when the
 produced document fails schema validation (unless `--no-validate`). Run
-`osi-orionbelt --help` or `osi-orionbelt obml-to-osi --help` for the full
+`ossie-orionbelt --help` or `ossie-orionbelt obml-to-osi --help` for the full
 option list.
 
 ## Python API
 
 ```python
 import yaml
-from osi_orionbelt import OBMLtoOSI, OSItoOBML, validate_osi
+from ossie_orionbelt import OBMLtoOSI, OSItoOBML, validate_osi
 
 obml = yaml.safe_load(open("model.obml.yaml"))
 osi = OBMLtoOSI(obml, "sales", "Sales model").convert()
@@ -121,5 +121,5 @@ for the ontology-layer mapping and its documented gaps.
 ```bash
 uv sync          # install
 uv run pytest    # run the test suite (includes a TPC-DS baseline)
-uv run ruff check && uv run mypy src/osi_orionbelt
+uv run ruff check && uv run mypy src/ossie_orionbelt
 ```

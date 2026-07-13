@@ -1,4 +1,4 @@
-"""osi-orionbelt: bidirectional OBML <-> OSI converter.
+"""ossie-orionbelt: bidirectional OBML <-> OSI converter.
 
 Converts between OrionBelt Markup Language (OBML) semantic models and Open
 Semantic Interchange (OSI) models, in both directions, plus an OSI ontology
@@ -17,7 +17,7 @@ Public API:
 
 from __future__ import annotations
 
-from osi_orionbelt.converter import (
+from ossie_orionbelt.converter import (
     OBMLtoOSI,
     OBMLtoOSIOntology,
     OSItoOBML,
