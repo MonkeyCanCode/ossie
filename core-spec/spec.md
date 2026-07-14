@@ -252,7 +252,7 @@ expression:
       - dialect: ANSI_SQL
         expression: customer_id
   description: Customer identifier
-  dimension: 
+  dimension:
     is_time: false
 ```
 
@@ -463,14 +463,14 @@ semantic_model:
                 - dialect: ANSI_SQL
                   expression: order_id
             description: Order identifier
-          
+
           - name: customer_id
             expression:
               dialects:
                 - dialect: ANSI_SQL
                   expression: customer_id
             description: Customer identifier
-          
+
           - name: order_date
             expression:
               dialects:
@@ -479,7 +479,7 @@ semantic_model:
             dimension:
               is_time: true
             description: Order date
-          
+
           - name: amount
             expression:
               dialects:
@@ -498,7 +498,7 @@ semantic_model:
                 - dialect: ANSI_SQL
                   expression: id
             description: Customer identifier
-          
+
           - name: email
             expression:
               dialects:
