@@ -56,7 +56,7 @@ with open("gooddata_ldm.json", "w") as f:
 ## Development
 
 ```bash
-uv sync --group dev
+uv sync
 uv run pytest
 ```
 
