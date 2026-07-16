@@ -24,7 +24,7 @@ name = "apache-ossie"
 version = "0.2.0.dev0"
 description = "Python types for the Apache Ossie semantic model specification"
 authors = [{ name = "Apache Software Foundation", email = "dev@ossie.apache.org" }]
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.11"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
