@@ -133,3 +133,8 @@ cd converters/dbt
 uv sync
 uv run pytest
 ```
+
+Generate new Syrupy snapshots:
+```bash
+uv run pytest --snapshot-update
+```
