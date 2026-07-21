@@ -21,7 +21,7 @@ Cortex Analyst semantic model YAML. Pure offline conversion — no Snowflake
 connection required.
 
 Usage:
-    python3 osi_to_snowflake_yaml_converter.py -i input.yaml -o output.yaml
+    python3 converter.py -i input.yaml -o output.yaml
 """
 
 import argparse
