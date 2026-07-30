@@ -24,12 +24,12 @@ on:
     branches: [ "main" ]
     paths:
       - 'python/**'
-      - '.github/**'    
+      - '.github/workflows/python-ci.yml'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'python/**'
-      - '.github/**'    
+      - '.github/workflows/python-ci.yml'
 
 jobs:
   build:
