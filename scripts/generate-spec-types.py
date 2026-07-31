@@ -23,6 +23,7 @@ Usage:
   python3 scripts/generate-spec-types.py --apply    # update spec.yaml in-place
 """
 
+import difflib
 import json
 import sys
 import argparse
@@ -84,19 +85,6 @@ def _schema_values(section: dict) -> list[str]:
     return list(data)
 
 
-def _spec_values(key: str) -> list[str]:
-    with open(SPEC) as f:
-        try:
-            docs = yaml.safe_load_all(f)
-        except yaml.YAMLError as e:
-            print(f"Error: Invalid YAML in {SPEC}: {e}", file=sys.stderr)
-            sys.exit(1)
-        for doc in docs:
-            if doc and key in doc:
-                return list(doc[key])
-    return []
-
-
 def _generate_block(section: dict, values: list[str]) -> str:
     key = section["key"]
     comment_col = section["comment_col"]
@@ -110,9 +98,12 @@ def _generate_block(section: dict, values: list[str]) -> str:
     ]
     for v in values:
         desc = descs.get(v)
+        if desc is None:
+            print(f"Warning: no description for '{key}' value '{v}'", file=sys.stderr)
         entry = '  - "{}"'.format(v)
         if desc:
-            lines.append('{}{}# {}'.format(entry, " " * (comment_col - len(entry)), desc))
+            pad = max(1, comment_col - len(entry))
+            lines.append('{}{}# {}'.format(entry, " " * pad, desc))
         else:
             lines.append(entry)
 
@@ -148,46 +139,56 @@ def _replace_section(text: str, key: str, block: str) -> str:
     return "".join(lines[:start]) + block + "".join(lines[end:])
 
 
-def _apply():
-    text = SPEC.read_text()
+def _render(text: str) -> str:
     for section in SECTIONS:
         values = _schema_values(section)
         block = _generate_block(section, values)
         text = _replace_section(text, section["key"], block)
 
-    # parse and validate before write
+    # parse and validate before returning
     try:
         list(yaml.safe_load_all(text))
     except yaml.YAMLError as e:
         print(f"Error: Generated YAML is invalid: {e}", file=sys.stderr)
         sys.exit(1)
-    SPEC.write_text(text)
+    return text
+
+
+def _apply():
+    rendered = _render(SPEC.read_text())
+    SPEC.write_text(rendered)
     print(f"Wrote {SPEC}", file=sys.stderr)
+
+
+def _check() -> list:
+    current = SPEC.read_text()
+    rendered = _render(current)
+    if current == rendered:
+        return 0
+
+    diff = difflib.unified_diff(
+        current.splitlines(keepends=True),
+        rendered.splitlines(keepends=True),
+        fromfile=f"{SPEC} (current)",
+        tofile=f"{SPEC} (expected)"
+    )
+    sys.stderr.writelines(diff)
+    print(f"{SPEC} is out of sync with {SCHEMA}. Run --apply to fix.", file=sys.stderr)
+    return 1
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true", help="Check spec.yaml is in sync")
-    parser.add_argument("--apply", action="store_true", help="Update spec.yaml in-place")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--check", action="store_true", help="Check spec.yaml is in sync")
+    group.add_argument("--apply", action="store_true", help="Update spec.yaml in-place")
     args = parser.parse_args()
 
     if args.apply:
         _apply()
         return
-
     if args.check:
-        diff = False
-        for section in SECTIONS:
-            expected = _schema_values(section)
-            current = _spec_values(section["key"])
-            if current != expected:
-                print(
-                    f"spec.yaml '{section['key']}' is out of sync with osi-schema.json",
-                    file=sys.stderr,
-                )
-                diff = True
-        sys.exit(1 if diff else 0)
-
+        sys.exit(_check())
     parser.print_help()
 
 
