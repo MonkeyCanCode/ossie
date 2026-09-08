@@ -29,42 +29,29 @@ Converters between Ossie, Palantir, and Spec ontology formats.
 
 ## Prerequisites
 
-- [pyenv](https://github.com/pyenv/pyenv) — manages the Python version
+- [uv](https://docs.astral.sh/uv/) — Python package and dependency manager
 
-Install pyenv if you don't have it:
-
-```bash
-brew install pyenv
-```
-
-Add to your shell profile (`~/.zshrc` or `~/.bashrc`) and restart the shell:
+Install uv if you don't have it:
 
 ```bash
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+brew install uv
 ```
 
 ## Setup
 
 ```bash
-pyenv install 3.11
-pyenv local 3.11
-pip install --upgrade pip
-pip install virtualenv
-python -m virtualenv venv
-source ./venv/bin/activate
-pip install -r requirements.lock
-pip install -e ".[dev]"
+cd converters/ontology
+uv sync
 ```
 
 ## Generating / updating the lock file
 
-`requirements.lock` is produced by [pip-tools](https://github.com/jazzband/pip-tools) from `pyproject.toml`.
-Run this whenever you add or change a dependency:
+`uv.lock` is produced by uv from `pyproject.toml`. Run this whenever you add or
+change a dependency:
 
 ```bash
-pip-compile --output-file requirements.lock pyproject.toml
+uv lock
+uv sync
 ```
 
 ## Usage
@@ -107,8 +94,14 @@ SNOWFLAKE_DATABASE_NAME=MY_DB SNOWFLAKE_SCHEMA_NAME=MY_SCHEMA \
   python scripts/palantir_to_ossie.py path/to/palantir_export.zip
 ```
 
-## Deactivating the environment
+## Running the tests
 
 ```bash
-deactivate
+uv run pytest
+```
+
+Regenerate pytest snapshots after an intentional output change:
+
+```bash
+uv run pytest --snapshot-update
 ```
