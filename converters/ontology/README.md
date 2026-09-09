@@ -73,9 +73,9 @@ Converts a Palantir ontology export (a `.zip` archive or an already extracted fo
 **Usage:**
 
 ```bash
-python scripts/palantir_to_ossie.py path/to/palantir_export.zip
+uv run python scripts/palantir_to_ossie.py path/to/palantir_export.zip
 # or an extracted folder:
-python scripts/palantir_to_ossie.py path/to/palantir_export/
+uv run python scripts/palantir_to_ossie.py path/to/palantir_export/
 ```
 
 Warnings are written to stderr; the Ossie YAML is written to stdout.
@@ -91,7 +91,7 @@ If already set in your environment they will be picked up automatically. To over
 
 ```bash
 SNOWFLAKE_DATABASE_NAME=MY_DB SNOWFLAKE_SCHEMA_NAME=MY_SCHEMA \
-  python scripts/palantir_to_ossie.py path/to/palantir_export.zip
+  uv run python scripts/palantir_to_ossie.py path/to/palantir_export.zip
 ```
 
 ## Running the tests
