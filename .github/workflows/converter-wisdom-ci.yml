@@ -17,24 +17,28 @@
 # under the License.
 #
 
-name: Converters Ontology CI
+name: Converters Wisdom CI
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - 'converters/ontology/**'
-      - '.github/workflows/converter-ontology-ci.yml'
+      - 'converters/wisdom/**'
+      - '.github/workflows/converter-wisdom-ci.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'converters/ontology/**'
-      - '.github/workflows/converter-ontology-ci.yml'
+      - 'converters/wisdom/**'
+      - '.github/workflows/converter-wisdom-ci.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
 
@@ -53,11 +57,11 @@ jobs:
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 
       - name: Sync dependencies
-        working-directory: converters/ontology
+        working-directory: converters/wisdom
         run: |
           uv sync
 
       - name: Unit Tests
-        working-directory: converters/ontology
+        working-directory: converters/wisdom
         run: |
           uv run pytest

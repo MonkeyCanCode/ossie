@@ -17,19 +17,21 @@
 # under the License.
 #
 
-name: Converters Ontology CI
+name: Converters Sigma CI
 
 on:
   push:
     branches: [ "main" ]
     paths:
-      - 'converters/ontology/**'
-      - '.github/workflows/converter-ontology-ci.yml'
+      - 'converters/sigma/**'
+      - 'python/**'
+      - '.github/workflows/converter-sigma-ci.yml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'converters/ontology/**'
-      - '.github/workflows/converter-ontology-ci.yml'
+      - 'converters/sigma/**'
+      - 'python/**'
+      - '.github/workflows/converter-sigma-ci.yml'
 
 jobs:
   build:
@@ -53,11 +55,11 @@ jobs:
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
 
       - name: Sync dependencies
-        working-directory: converters/ontology
+        working-directory: converters/sigma
         run: |
           uv sync
 
       - name: Unit Tests
-        working-directory: converters/ontology
+        working-directory: converters/sigma
         run: |
           uv run pytest
