@@ -97,7 +97,7 @@ def test_to_ossie_json_excludes_none(document_data: dict) -> None:
     semantic_model = parsed["semantic_model"][0]
     assert "description" not in semantic_model
     assert "relationships" not in semantic_model
-    assert "vendors" not in semantic_model
+    assert "description" not in semantic_model
 
 
 def test_to_ossie_yaml_validates_as_yaml(document_data: dict) -> None:

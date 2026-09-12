@@ -27,7 +27,7 @@ def _expression_data(value: str = "value") -> dict:
 
 
 @pytest.fixture
-def make_expression() -> Callable[[str], OssieExpression]:
+def make_expression() -> Callable[..., OssieExpression]:
     def _factory(value: str = "value") -> OssieExpression:
         return OssieExpression.model_validate(_expression_data(value))
 
