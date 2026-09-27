@@ -81,11 +81,11 @@ def convert_ossie_to_snowflake(ossie_yaml_str):
     """Top-level entry point. Parses Ossie YAML, validates, converts, returns
     Snowflake YAML string.
 
-    Expects the standard Ossie wrapped format::
+    Expects the standard Ossie document format::
 
         version: "0.2.0.dev0"
-        semantic_model:
-          - name: ...
+        name: ...
+        datasets: [...]
 
     Args:
         ossie_yaml_str: Ossie YAML as a string.
@@ -107,25 +107,21 @@ def convert_ossie_to_snowflake(ossie_yaml_str):
             f"Supported: {SUPPORTED_VERSION}"
         )
 
-    semantic_model = root.get("semantic_model")
-    if not isinstance(semantic_model, list) or len(semantic_model) == 0:
+    if "semantic_model" in root:
         raise OssieConversionError(
-            "Invalid Ossie YAML: 'semantic_model' must be a non-empty list"
+            "Legacy 'semantic_model' wrappers are not supported; "
+            "place the model properties directly at the document root"
         )
 
-    if len(semantic_model) > 1:
-        warnings.warn(
-            f"Ossie YAML contains {len(semantic_model)} semantic models; "
-            f"only the first will be converted"
-        )
+    if "dialects" in root or "vendors" in root:
+        raise OssieConversionError("Root dialects and vendors are not supported by the Ossie spec")
 
-    ossie = semantic_model[0]
-    if not isinstance(ossie, dict):
-        raise OssieConversionError(
-            "Invalid Ossie YAML: 'semantic_model' entries must be mappings"
-        )
-
-    snowflake_model = _convert_model(ossie)
+    # Document metadata is consumed here; it is not a dropped model property.
+    model = {
+        key: value for key, value in root.items()
+        if key != "version"
+    }
+    snowflake_model = _convert_model(model)
 
     return yaml.dump(
         snowflake_model,
@@ -376,9 +372,10 @@ def _convert_relationship(rel):
 def _extract_expression(expression, field_name):
     """Selects the best dialect expression for Snowflake.
 
-    Returns the expression string, or None if only unsupported dialects are
-    present (the field should be skipped). Raises OssieConversionError if the
-    expression or dialects list is missing entirely.
+    Preference order: SNOWFLAKE, then ANSI_SQL, then OSSIE_SQL_2026 (the last two
+    are ANSI-SQL-compatible fallbacks). Returns the expression string, or None if
+    only unsupported dialects are present (the field should be skipped). Raises
+    OssieConversionError if the expression or dialects list is missing entirely.
     """
     if expression is None or not isinstance(expression, dict):
         raise OssieConversionError(
@@ -393,6 +390,8 @@ def _extract_expression(expression, field_name):
 
     snowflake_expr = None
     ansi_expr = None
+    # OSSIE_SQL_2026 is ANSI-SQL-compatible; treated as an ANSI_SQL-equivalent fallback.
+    ossie_sql_expr = None
 
     for d in dialects:
         dialect_name = (d.get("dialect") or "").upper()
@@ -400,16 +399,21 @@ def _extract_expression(expression, field_name):
             snowflake_expr = d.get("expression")
         elif dialect_name == "ANSI_SQL":
             ansi_expr = d.get("expression")
+        elif dialect_name == "OSSIE_SQL_2026":
+            ossie_sql_expr = d.get("expression")
 
     if snowflake_expr is not None:
         return snowflake_expr
     if ansi_expr is not None:
         return ansi_expr
+    if ossie_sql_expr is not None:
+        return ossie_sql_expr
 
     dialect_names = [d.get("dialect", "") for d in dialects]
     warnings.warn(
         f"Skipping field/metric '{field_name}': no Snowflake-compatible expression "
-        f"(has dialects: {', '.join(dialect_names)}; requires SNOWFLAKE or ANSI_SQL)"
+        f"(has dialects: {', '.join(dialect_names)}; requires SNOWFLAKE, ANSI_SQL, "
+        f"or OSSIE_SQL_2026)"
     )
     return None
 

@@ -31,6 +31,10 @@ developed in the
 repository (under `packages/ossie-orionbelt`) and published to PyPI from there;
 file issues and contributions upstream.
 
+Ossie documents contain one model directly at the root, with `version`, `name`,
+`datasets`, and optional model properties. Legacy `semantic_model` wrappers
+(arrays or objects) are rejected.
+
 ## Requirements
 
 - Python 3.12+
@@ -125,7 +129,7 @@ OBML, but are not interpreted by other Ossie consumers:
   (`obml_unconverted_metrics`) and re-emitted on OBML to Ossie, so the Ossie to OBML
   to Ossie roundtrip stays lossless. A `LOSSY:` warning is raised for each such
   metric because it is **not queryable through OBML**. SQL expressions in the
-  `ANSI_SQL`, `SNOWFLAKE`, and `DATABRICKS` dialects are all read on import.
+  `ANSI_SQL`, `OSSIE_SQL_2026`, `SNOWFLAKE`, and `DATABRICKS` dialects are all read on import.
 
 Ossie v0.1.x inputs are accepted on read via a legacy normalization shim; output
 targets Ossie **v0.2.0.dev0**.
