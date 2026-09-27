@@ -24,6 +24,7 @@ import org.apache.ossie.converter.ConverterFactory;
 import org.apache.ossie.converter.ConversionDirection;
 import org.apache.ossie.exception.ConversionException;
 import org.apache.ossie.exception.InvalidInputException;
+import org.apache.ossie.exception.ValidationException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,6 +58,9 @@ public class OssieSalesforceConverter {
         } catch (ConversionException e) {
             System.err.println("Error: " + e.getMessage());
             System.exit(3);
+        } catch (ValidationException e) {
+            System.err.println("Error: " + e.getMessage());
+            System.exit(4);
         }
     }
 
