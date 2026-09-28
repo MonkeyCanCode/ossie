@@ -116,11 +116,6 @@ def test_metric_missing_expression() -> None:
         OssieMetric(name="total_sales")
 
 
-def test_document_missing_semantic_model() -> None:
-    with pytest.raises(ValidationError):
-        OssieDocument()
-
-
 def test_semantic_model_missing_name() -> None:
     with pytest.raises(ValidationError):
         OssieSemanticModel(

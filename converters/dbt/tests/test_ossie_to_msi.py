@@ -20,7 +20,16 @@
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
-from ossie import OssieDataType, OssieDimension
+from ossie import (
+    OssieDataType,
+    OssieDialect,
+    OssieDialectExpression,
+    OssieDimension,
+    OssieDocument,
+    OssieExpression,
+    OssieField,
+    OssieMetric,
+)
 from ossie_dbt.msi_to_ossie import MSIToOssieConverter
 from ossie_dbt.ossie_to_msi import OssieToMSIConverter
 from metricflow_semantic_interfaces.implementations.elements.measure import (
@@ -135,6 +144,45 @@ class TestOssieToMSIFieldClassification:
         assert len(sm.entities) == 1
         assert sm.entities[0].name == "email"
         assert sm.entities[0].type.value == "unique"
+
+    @pytest.mark.parametrize(
+        ("primary_key", "unique_keys", "expected_error"),
+        [
+            (
+                ["tenant_id", "order_id"],
+                None,
+                "Dataset 'orders' has composite primary key ['tenant_id', 'order_id']; "
+                "MetricFlow entities cannot represent composite keys losslessly",
+            ),
+            (
+                None,
+                [["tenant_id", "external_id"]],
+                "Dataset 'orders' has composite unique key ['tenant_id', 'external_id']; "
+                "MetricFlow entities cannot represent composite keys losslessly",
+            ),
+        ],
+    )
+    def test_composite_key_is_rejected(
+        self,
+        primary_key: list[str] | None,
+        unique_keys: list[list[str]] | None,
+        expected_error: str,
+    ) -> None:
+        doc = _ossie_doc(
+            datasets=[
+                _ossie_dataset(
+                    "orders",
+                    fields=[_ossie_field("tenant_id"), _ossie_field("order_id")],
+                    primary_key=primary_key,
+                    unique_keys=unique_keys,
+                )
+            ]
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            OssieToMSIConverter().convert(doc)
+
+        assert str(exc_info.value) == expected_error
 
     def test_relationship_from_column_becomes_foreign_entity(self) -> None:
         doc = _ossie_doc(
@@ -417,6 +465,142 @@ class TestOssieToMSIMetricConversion:
         assert m.type_params.expr == "amount"
 
 
+def _multi_dialect_expr(*pairs: tuple[OssieDialect, str]) -> OssieExpression:
+    """Build an expression carrying more than one dialect, in the given order."""
+    return OssieExpression(
+        dialects=[OssieDialectExpression(dialect=dialect, expression=expr) for dialect, expr in pairs]
+    )
+
+
+_SNOWFLAKE_METRIC = (OssieDialect.SNOWFLAKE, "SUM(orders.amt_snowflake_only)")
+_OSSIE_SQL_METRIC = (OssieDialect.OSSIE_SQL_2026, "SUM(orders.amount)")
+_ANSI_METRIC = (OssieDialect.ANSI_SQL, "SUM(orders.amount_ansi)")
+
+
+def _doc_with_metric_expression(expression: OssieExpression) -> OssieDocument:
+    return _ossie_doc(
+        datasets=[_ossie_dataset("orders", fields=[_ossie_field("amount")])],
+        metrics=[OssieMetric(name="revenue", expression=expression)],
+    )
+
+
+class TestOssieToMSIDialectSelection:
+    @pytest.mark.parametrize(
+        "order",
+        [
+            (_OSSIE_SQL_METRIC, _SNOWFLAKE_METRIC),
+            (_SNOWFLAKE_METRIC, _OSSIE_SQL_METRIC),
+        ],
+        ids=["ossie_sql_first", "vendor_first"],
+    )
+    def test_ossie_sql_2026_wins_over_a_vendor_dialect_in_either_order(
+        self, order: tuple[tuple[OssieDialect, str], ...]
+    ) -> None:
+        doc = _doc_with_metric_expression(_multi_dialect_expr(*order))
+
+        result = OssieToMSIConverter().convert(doc).output
+
+        assert result.metrics[0].type_params.expr == "amount"
+
+    @pytest.mark.parametrize(
+        "order",
+        [
+            (_ANSI_METRIC, _OSSIE_SQL_METRIC),
+            (_OSSIE_SQL_METRIC, _ANSI_METRIC),
+        ],
+        ids=["ansi_first", "ossie_sql_first"],
+    )
+    def test_ansi_sql_still_takes_precedence_over_ossie_sql_2026(
+        self, order: tuple[tuple[OssieDialect, str], ...]
+    ) -> None:
+        doc = _doc_with_metric_expression(_multi_dialect_expr(*order))
+
+        result = OssieToMSIConverter().convert(doc).output
+
+        assert result.metrics[0].type_params.expr == "amount_ansi"
+
+    def test_field_expression_prefers_ossie_sql_2026_over_a_vendor_dialect(self) -> None:
+        doc = _ossie_doc(
+            datasets=[
+                _ossie_dataset(
+                    "orders",
+                    fields=[
+                        OssieField(
+                            name="region",
+                            expression=_multi_dialect_expr(
+                                (OssieDialect.SNOWFLAKE, "region_snowflake_only"),
+                                (OssieDialect.OSSIE_SQL_2026, "region_portable"),
+                            ),
+                        )
+                    ],
+                )
+            ]
+        )
+
+        sm = OssieToMSIConverter().convert(doc).output.semantic_models[0]
+
+        assert [(d.name, d.expr) for d in sm.dimensions] == [("region", "region_portable")]
+
+    def test_first_entry_is_still_used_when_no_portable_dialect_is_present(self) -> None:
+        doc = _doc_with_metric_expression(
+            _multi_dialect_expr(
+                (OssieDialect.SNOWFLAKE, "SUM(orders.amt_snowflake_only)"),
+                (OssieDialect.DAX, "SUM(orders.amt_dax_only)"),
+            )
+        )
+
+        result = OssieToMSIConverter().convert(doc).output
+
+        assert result.metrics[0].type_params.expr == "amt_snowflake_only"
+
+    def test_the_first_ossie_sql_2026_entry_wins_when_the_dialect_is_repeated(self) -> None:
+        # `dialects` has no `uniqueItems` constraint, so the same dialect may be listed twice.
+        doc = _doc_with_metric_expression(
+            _multi_dialect_expr(
+                (OssieDialect.OSSIE_SQL_2026, "SUM(orders.amount)"),
+                (OssieDialect.OSSIE_SQL_2026, "SUM(orders.amount_duplicate)"),
+            )
+        )
+
+        result = OssieToMSIConverter().convert(doc).output
+
+        assert result.metrics[0].type_params.expr == "amount"
+
+    def test_the_dataset_of_a_column_is_resolved_with_the_same_dialect_preference(self) -> None:
+        # `unrelated` is declared first, so resolving the field expression positionally
+        # would miss `orders` and fall back to it.
+        doc = _ossie_doc(
+            datasets=[
+                _ossie_dataset("unrelated", fields=[_ossie_field("other_column")]),
+                _ossie_dataset(
+                    "orders",
+                    fields=[
+                        OssieField(
+                            name="amount",
+                            expression=_multi_dialect_expr(
+                                (OssieDialect.SNOWFLAKE, "amt_snowflake_only"),
+                                (OssieDialect.OSSIE_SQL_2026, "amount_portable"),
+                            ),
+                        )
+                    ],
+                ),
+            ],
+            metrics=[
+                OssieMetric(
+                    name="revenue",
+                    expression=_multi_dialect_expr(
+                        (OssieDialect.OSSIE_SQL_2026, "SUM(amount_portable)"),
+                    ),
+                )
+            ],
+        )
+
+        result = OssieToMSIConverter().convert(doc).output
+
+        agg_params = result.metrics[0].type_params.metric_aggregation_params
+        assert agg_params.semantic_model == "orders"
+
+
 class TestOssieToMSIRoundTrip:
     def test_ossie_to_msi_to_ossie_preserves_structure(self, snapshot: SnapshotAssertion) -> None:
         """Ossie → MSI → Ossie preserves dataset names, fields, and metric expressions."""
@@ -442,7 +626,7 @@ class TestOssieToMSIRoundTrip:
 
         ossie_doc = MSIToOssieConverter().convert(msi).output
 
-        dataset = ossie_doc.semantic_model[0].datasets[0]
+        dataset = ossie_doc.datasets[0]
         assert dataset.name == "orders"
 
         field_names = {f.name for f in dataset.fields or []}
@@ -451,7 +635,7 @@ class TestOssieToMSIRoundTrip:
         assert "created_at" in field_names
         assert "amount" in field_names
 
-        metrics = ossie_doc.semantic_model[0].metrics or []
+        metrics = ossie_doc.metrics or []
         assert len(metrics) == 1
         assert metrics[0].name == "revenue"
         assert metrics[0].expression.dialects[0].expression == "SUM(orders.amount)"
@@ -489,7 +673,7 @@ class TestOssieToMSIRoundTrip:
             _manifest(semantic_models=[orders], metrics=[metric])
         ).output
 
-        ossie_expr = ossie_doc.semantic_model[0].metrics[0].expression.dialects[0].expression
+        ossie_expr = ossie_doc.metrics[0].expression.dialects[0].expression
         assert ossie_expr == "PERCENTILE_DISC(0.95) WITHIN GROUP (ORDER BY orders.amount)"
 
         back = OssieToMSIConverter().convert(ossie_doc).output

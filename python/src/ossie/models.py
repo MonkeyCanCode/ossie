@@ -34,6 +34,8 @@ class OssieDialect(str, Enum):
     BIGQUERY = "BIGQUERY"
     SIGMA = "SIGMA"
     THOUGHTSPOT = "THOUGHTSPOT"
+    DAX = "DAX"
+    OSSIE_SQL_2026 = "OSSIE_SQL_2026"
 
 
 class OssieDataType(str, Enum):
@@ -206,15 +208,12 @@ class OssieSemanticModel(BaseModel):
     custom_extensions: Optional[list[OssieCustomExtension]] = None
 
 
-class OssieDocument(BaseModel):
-    """Root Ossie document."""
+class OssieDocument(OssieSemanticModel):
+    """A single semantic model with document metadata at the root."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
     version: str = "0.2.0.dev0"
-    dialects: Optional[list[OssieDialect]] = None
-    vendors: Optional[list[OssieVendor]] = None
-    semantic_model: list[OssieSemanticModel]
 
     def to_ossie_yaml(self, **kwargs: Any) -> str:
         """Serialize to Ossie-compliant YAML (uses field aliases and excludes None values)."""

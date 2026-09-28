@@ -40,12 +40,17 @@ _ISSUE_REASON: dict[ConverterIssueType, str] = {
     ConverterIssueType.PRIVATE_METRIC_DROPPED: "Ossie has no visibility modifiers",
     ConverterIssueType.NATURAL_ENTITY_DROPPED: "Ossie has no natural-key entity type",
     ConverterIssueType.CUMULATIVE_SEMANTICS_LOSS: "Ossie expressions cannot represent window or grain semantics; the base aggregation was preserved",
+    ConverterIssueType.AMBIGUOUS_REFERENCE_METRIC_DROPPED: (
+        "an input metric is listed more than once under one reference with differing filters, "
+        "so the expression reference is ambiguous; give each occurrence a distinct alias"
+    ),
 }
 
 _DROPPED_ISSUE_TYPES = {
     ConverterIssueType.CONVERSION_METRIC_DROPPED,
     ConverterIssueType.PRIVATE_METRIC_DROPPED,
     ConverterIssueType.NATURAL_ENTITY_DROPPED,
+    ConverterIssueType.AMBIGUOUS_REFERENCE_METRIC_DROPPED,
 }
 
 
@@ -74,7 +79,9 @@ def _cmd_ossie_to_msi(args: argparse.Namespace) -> None:
     document = OssieDocument.model_validate(raw)
     result = OssieToMSIConverter().convert(document)
 
-    output_path.write_text(result.output.model_dump_json(by_alias=True, exclude_none=True, indent=2))
+    # PydanticSemanticManifest subclasses pydantic.v1.BaseModel, whose JSON
+    # serializer is .json(), not the pydantic v2 .model_dump_json().
+    output_path.write_text(result.output.json(by_alias=True, exclude_none=True, indent=2))
     print(f"Written to {output_path}", file=sys.stderr)
 
 

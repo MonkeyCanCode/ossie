@@ -22,12 +22,11 @@ import yaml
 from ossie import (
     OssieDialect,
     OssieDocument,
-    OssieVendor,
 )
 
 
 def test_to_ossie_yaml_uses_alias(document_data: dict) -> None:
-    document_data["semantic_model"][0]["relationships"] = [
+    document_data["relationships"] = [
         {
             "name": "order_customer",
             "from": "orders",
@@ -42,40 +41,8 @@ def test_to_ossie_yaml_uses_alias(document_data: dict) -> None:
     assert "from_dataset" not in output
 
 
-def test_to_ossie_yaml_includes_dialects_and_vendors(document_data: dict) -> None:
-    document_data["dialects"] = [OssieDialect.ANSI_SQL, OssieDialect.DATABRICKS]
-    document_data["vendors"] = [OssieVendor.DATABRICKS]
-    document = OssieDocument.model_validate(document_data)
-    output = document.to_ossie_yaml()
-    parsed = yaml.safe_load(output)
-    assert parsed["dialects"] == ["ANSI_SQL", "DATABRICKS"]
-    assert parsed["vendors"] == ["DATABRICKS"]
-
-
-def test_to_ossie_json_includes_dialects_and_vendors(document_data: dict) -> None:
-    document_data["dialects"] = [OssieDialect.SNOWFLAKE]
-    document_data["vendors"] = [OssieVendor.SALESFORCE, OssieVendor.COMMON]
-    document = OssieDocument.model_validate(document_data)
-    output = document.to_ossie_json()
-    parsed = json.loads(output)
-    assert parsed["dialects"] == ["SNOWFLAKE"]
-    assert parsed["vendors"] == ["SALESFORCE", "COMMON"]
-
-
-def test_to_ossie_yaml_excludes_none(document_data: dict) -> None:
-    document_data["dialects"] = [OssieDialect.ANSI_SQL]
-    document = OssieDocument.model_validate(document_data)
-    output = document.to_ossie_yaml()
-    parsed = yaml.safe_load(output)
-    assert parsed["dialects"] == ["ANSI_SQL"]
-    assert "vendors" not in parsed
-    semantic_model = parsed["semantic_model"][0]
-    assert semantic_model["name"] == "typed_model"
-    assert "description" not in semantic_model
-
-
 def test_to_ossie_json_uses_alias(document_data: dict) -> None:
-    document_data["semantic_model"][0]["relationships"] = [
+    document_data["relationships"] = [
         {
             "name": "order_customer",
             "from": "orders",
@@ -87,29 +54,64 @@ def test_to_ossie_json_uses_alias(document_data: dict) -> None:
     document = OssieDocument.model_validate(document_data)
     output = document.to_ossie_json()
     parsed = json.loads(output)
-    assert parsed["semantic_model"][0]["relationships"][0]["from"] == "orders"
+    assert parsed["relationships"][0]["from"] == "orders"
+
+
+def test_to_ossie_yaml_includes_all_dialects(document_data: dict) -> None:
+    document_data["datasets"][0]["fields"][0]["expression"] = {
+        "dialects": [
+            {"dialect": OssieDialect.ANSI_SQL, "expression": "occurred_at"},
+            {"dialect": OssieDialect.SNOWFLAKE, "expression": "OCCURRED_AT"},
+        ]
+    }
+    document = OssieDocument.model_validate(document_data)
+    parsed = yaml.safe_load(document.to_ossie_yaml())
+    assert parsed["datasets"][0]["fields"][0]["expression"]["dialects"] == [
+        {"dialect": "ANSI_SQL", "expression": "occurred_at"},
+        {"dialect": "SNOWFLAKE", "expression": "OCCURRED_AT"},
+    ]
+
+
+def test_to_ossie_yaml_includes_custom_extension_vendor(document_data: dict) -> None:
+    document_data["custom_extensions"] = [
+        {"vendor_name": "DATABRICKS", "data": '{"id":"model-1"}'}
+    ]
+    document = OssieDocument.model_validate(document_data)
+    parsed = yaml.safe_load(document.to_ossie_yaml())
+    assert parsed["custom_extensions"] == [
+        {"vendor_name": "DATABRICKS", "data": '{"id":"model-1"}'}
+    ]
+
+
+def test_to_ossie_yaml_excludes_none(document_data: dict) -> None:
+    document = OssieDocument.model_validate(document_data)
+    output = document.to_ossie_yaml()
+    parsed = yaml.safe_load(output)
+    assert parsed["name"] == "typed_model"
+    assert "description" not in parsed
+    assert "relationships" not in parsed
+    assert "ai_context" not in parsed
 
 
 def test_to_ossie_json_excludes_none(document_data: dict) -> None:
     document = OssieDocument.model_validate(document_data)
     output = document.to_ossie_json()
     parsed = json.loads(output)
-    semantic_model = parsed["semantic_model"][0]
-    assert "description" not in semantic_model
-    assert "relationships" not in semantic_model
-    assert "ai_context" not in semantic_model
+    assert parsed["name"] == "typed_model"
+    assert "description" not in parsed
+    assert "relationships" not in parsed
+    assert "ai_context" not in parsed
 
 
 def test_to_ossie_yaml_validates_as_yaml(document_data: dict) -> None:
     document = OssieDocument.model_validate(document_data)
     output = document.to_ossie_yaml()
     parsed = yaml.safe_load(output)
-    assert parsed["semantic_model"][0]["name"] == "typed_model"
+    assert parsed["name"] == "typed_model"
 
 
 def test_to_ossie_json_roundtrip(document_data: dict) -> None:
-    document_data["dialects"] = [OssieDialect.DATABRICKS]
-    document_data["semantic_model"][0]["datasets"][0]["fields"][0]["expression"] = {
+    document_data["datasets"][0]["fields"][0]["expression"] = {
         "dialects": [{"dialect": OssieDialect.DATABRICKS, "expression": "order_id"}]
     }
     document = OssieDocument.model_validate(document_data)

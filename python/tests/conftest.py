@@ -19,11 +19,11 @@ from collections.abc import Callable
 
 import pytest
 
-from ossie import OssieDialect, OssieExpression
+from ossie import OssieExpression
 
 
 def _expression_data(value: str = "value") -> dict:
-    return {"dialects": [{"dialect": OssieDialect.ANSI_SQL, "expression": value}]}
+    return {"dialects": [{"dialect": "ANSI_SQL", "expression": value}]}
 
 
 @pytest.fixture
@@ -38,30 +38,26 @@ def make_expression() -> Callable[..., OssieExpression]:
 def document_data() -> dict:
     return {
         "version": "0.2.0.dev0",
-        "semantic_model": [
+        "name": "typed_model",
+        "datasets": [
             {
-                "name": "typed_model",
-                "datasets": [
+                "name": "events",
+                "source": "catalog.schema.events",
+                "fields": [
                     {
-                        "name": "events",
-                        "source": "catalog.schema.events",
-                        "fields": [
-                            {
-                                "name": "occurred_at",
-                                "expression": _expression_data("occurred_at"),
-                                "dimension": {},
-                                "datatype": "DateTimeTz",
-                            }
-                        ],
+                        "name": "occurred_at",
+                        "expression": _expression_data("occurred_at"),
+                        "dimension": {},
+                        "datatype": "DateTimeTz",
                     }
                 ],
-                "metrics": [
-                    {
-                        "name": "revenue",
-                        "expression": _expression_data("SUM(events.revenue)"),
-                        "datatype": "Decimal",
-                    }
-                ],
+            }
+        ],
+        "metrics": [
+            {
+                "name": "revenue",
+                "expression": _expression_data("SUM(events.revenue)"),
+                "datatype": "Decimal",
             }
         ],
     }

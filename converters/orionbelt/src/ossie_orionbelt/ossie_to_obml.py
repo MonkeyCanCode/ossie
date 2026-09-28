@@ -76,27 +76,23 @@ class OssietoOBML:
         if version and not version.startswith(("0.1", "0.0")):
             return  # already v0.2+ (or future) — nothing to do
 
-        models = self.ossie.get("semantic_model", [])
-        if not isinstance(models, list):
-            return
-
-        for model in models:
-            for ds in model.get("datasets", []) or []:
-                # Promote legacy primary_key / unique_keys from OBSL extras
-                # only if the dataset doesn't already declare them.
-                legacy = self._extract_obml_extras(ds)
-                if not legacy:
-                    continue
-                if "primary_key" not in ds and legacy.get("obml_primary_key"):
-                    pk = legacy["obml_primary_key"]
-                    if isinstance(pk, list) and all(isinstance(c, str) for c in pk):
-                        ds["primary_key"] = list(pk)
-                if "unique_keys" not in ds and legacy.get("obml_unique_keys"):
-                    uk = legacy["obml_unique_keys"]
-                    if isinstance(uk, list) and all(
-                        isinstance(g, list) and all(isinstance(c, str) for c in g) for g in uk
-                    ):
-                        ds["unique_keys"] = [list(g) for g in uk]
+        model = self.ossie
+        for ds in model.get("datasets", []) or []:
+            # Promote legacy primary_key / unique_keys from OBSL extras
+            # only if the dataset doesn't already declare them.
+            legacy = self._extract_obml_extras(ds)
+            if not legacy:
+                continue
+            if "primary_key" not in ds and legacy.get("obml_primary_key"):
+                pk = legacy["obml_primary_key"]
+                if isinstance(pk, list) and all(isinstance(c, str) for c in pk):
+                    ds["primary_key"] = list(pk)
+            if "unique_keys" not in ds and legacy.get("obml_unique_keys"):
+                uk = legacy["obml_unique_keys"]
+                if isinstance(uk, list) and all(
+                    isinstance(g, list) and all(isinstance(c, str) for c in g) for g in uk
+                ):
+                    ds["unique_keys"] = [list(g) for g in uk]
 
         if version.startswith(("0.0", "0.1")):
             self.warnings.append(
@@ -111,21 +107,22 @@ class OssietoOBML:
         self.warnings = []
         self._unconverted_metrics = []
 
-        # v0.1.x inputs need the legacy shim to promote pre-v0.2
-        # custom_extensions into v0.2 first-class fields before we parse.
-        self._normalize_legacy_v01()
-
-        models = self.ossie.get("semantic_model", [])
-        if not models:
-            raise ValueError("No semantic_model found in Ossie input")
-
-        # Take the first semantic model (OBML is a single-model format)
-        model = models[0]
-        if len(models) > 1:
-            self.warnings.append(
-                f"Ossie contains {len(models)} semantic models; "
-                f"only the first ('{model.get('name')}') is converted."
+        if not isinstance(self.ossie, dict):
+            raise ValueError("Ossie input must be a mapping")
+        if "semantic_model" in self.ossie:
+            raise ValueError(
+                "Legacy 'semantic_model' wrappers are not supported; "
+                "place the model properties directly at the document root"
             )
+
+        if "dialects" in self.ossie or "vendors" in self.ossie:
+            raise ValueError("Root dialects and vendors are not supported by the Ossie spec")
+
+        # Retain legacy key metadata normalization for already flattened inputs.
+        self._normalize_legacy_v01()
+        model = self.ossie
+        if not model.get("name"):
+            raise ValueError("Ossie model requires a name at the document root")
 
         obml: dict[str, Any] = {"version": 1.0}
 
@@ -727,14 +724,17 @@ class OssietoOBML:
                 measures[name] = delegated
                 continue
 
-            # Prefer ANSI_SQL, but also read SNOWFLAKE / DATABRICKS expressions
-            # (SQL engines OrionBelt targets) — their aggregations are
-            # syntactically ANSI-compatible. Non-SQL dialects (MDX/TABLEAU/MAQL)
-            # are not parsed as SQL.
+            # Prefer ANSI_SQL, but also read OSSIE_SQL_2026 and SNOWFLAKE /
+            # DATABRICKS expressions - their aggregations are syntactically
+            # ANSI-compatible. Non-SQL dialects (MDX/TABLEAU/MAQL/...) are not
+            # parsed as SQL.
             expr_text, _expr_dialect = self._select_sql_expression(m.get("expression", {}))
             if not expr_text:
                 self._preserve_unconverted_metric(
-                    m, "no SQL-parseable dialect (ANSI_SQL / SNOWFLAKE / DATABRICKS) expression"
+                    m,
+                    "no SQL-parseable dialect ("
+                    + " / ".join(_SQL_PARSEABLE_DIALECTS)
+                    + ") expression",
                 )
                 continue
 
@@ -999,8 +999,8 @@ class OssietoOBML:
         """Pick a SQL-parseable expression from an Ossie ``expression`` object.
 
         Returns ``(expression, dialect)`` for the most preferred SQL dialect
-        present (ANSI_SQL > SNOWFLAKE > DATABRICKS), or ``("", "")`` when the
-        metric only carries non-SQL dialects (MDX / TABLEAU / MAQL) or no usable
+        present (ANSI_SQL > OSSIE_SQL_2026 > SNOWFLAKE > DATABRICKS), or
+        ``("", "")`` when the metric only carries non-SQL dialects or no usable
         expression. Catching SNOWFLAKE / DATABRICKS lets third-party models
         whose authors omitted ANSI_SQL still convert, since their aggregation
         syntax is ANSI-compatible.
