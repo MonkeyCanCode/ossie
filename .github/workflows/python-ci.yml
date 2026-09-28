@@ -33,11 +33,12 @@ on:
       - 'core-spec/**'
       - '.github/workflows/python-ci.yml'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     strategy:
       fail-fast: false
       matrix:
