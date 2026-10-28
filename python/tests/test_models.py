@@ -337,7 +337,7 @@ def test_document_is_a_semantic_model(document_data: dict) -> None:
         (("datasets", 0, "fields", 0, "expression"), "dialect"),
         (("datasets", 0, "fields", 0, "expression", "dialects", 0), "expressions"),
         (("datasets", 0, "fields", 0, "dimension"), "is_tile"),
-        (("metrics", 0), "expresssion"),
+        (("metrics", 0), "expression"),
     ],
     ids=[
         "document",
